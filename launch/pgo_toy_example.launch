@@ -1,0 +1,8 @@
+<launch>
+  <node pkg="pgo_toy_example" type="pgo_toy_example" name="pgo_toy_example"  output="screen" >
+    <param name="loop_rate" value="5" />
+    <param name="iteration" value="20" />
+  </node>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find pgo_toy_example)/rviz/toy_example.rviz" />
+</launch>
