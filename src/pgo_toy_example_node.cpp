@@ -22,17 +22,30 @@
 
 // prev poses (gray sphere).
 visualization_msgs::MarkerArray prev_nodes;
+
 // prev edges (gray line).
 visualization_msgs::MarkerArray prev_edges;
+
 // optimized poses (black sphere).
 visualization_msgs::MarkerArray opt_nodes;
+
 // optimized edges (black line).
 visualization_msgs::MarkerArray opt_edges;
+
+// text arrays.
 visualization_msgs::MarkerArray texts;
+
 double xinit, yinit, zinit;
 
-void SetNodes(PGOToyExample* toy, visualization_msgs::MarkerArray& nodes,
-              std::string ns, int id, double r, double g, double b, double a, bool is_opt_node)
+/// \brief Set the pose graph nodes.
+/// \param[in] toy Pointer to PGOToyExample instance.
+/// \param[out] nodes Marker array of pose graph nodes.
+/// \param[in] ns Namespace.
+/// \param[in] id Unique node id.
+/// \param[in] rgba Color information.
+/// \param[in] is_opt_node Boolean of optimized nodes.
+void SetNode(PGOToyExample* toy, visualization_msgs::MarkerArray& nodes,
+              std::string ns, int id, Vec4 rgba, bool is_opt_node)
 {
   visualization_msgs::Marker node;
   node.header.frame_id = "world";
@@ -41,7 +54,7 @@ void SetNodes(PGOToyExample* toy, visualization_msgs::MarkerArray& nodes,
   node.id = id;
   node.type = visualization_msgs::Marker::SPHERE;
   node.scale.x = node.scale.y = node.scale.z = 0.2;
-  node.color.r = r; node.color.g = g; node.color.b = b; node.color.a = a;
+  node.color.r = rgba[0]; node.color.g = rgba[1]; node.color.b = rgba[2]; node.color.a = rgba[3];
 
   if(!is_opt_node) {
     Quaternion q = (Quaternion)toy->GetOriginalPoses()[id].rotation();
@@ -103,7 +116,7 @@ void SetNodes(PGOToyExample* toy, visualization_msgs::MarkerArray& nodes,
     opt_node_text.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     opt_node_text.action = visualization_msgs::Marker::ADD;
     opt_node_text.scale.z = 0.1;
-    opt_node_text.color.r = 0.0; opt_node_text.color.g = 0.0; opt_node_text.color.b = 0.0; opt_node_text.color.a = 1.0;
+    opt_node_text.color.r =0.0; opt_node_text.color.g = 0.0; opt_node_text.color.b = 0.0; opt_node_text.color.a = 1.0;
     opt_node_text.pose.position.x = node.pose.position.x;
     opt_node_text.pose.position.y = node.pose.position.y;
     opt_node_text.pose.position.z = node.pose.position.z+0.2;
@@ -113,9 +126,17 @@ void SetNodes(PGOToyExample* toy, visualization_msgs::MarkerArray& nodes,
   }
 }
 
-void SetEdges(PGOToyExample* toy, visualization_msgs::MarkerArray& edges,
-              std::string ns, int id, int start, int end,
-              double r, double g, double b, double a, bool is_opt_edge)
+/// \brief Set the pose graph edge.
+/// \param[in] toy Pointer to PGOToyExample instance.
+/// \param[out] edges Marker array of pose graph edges.
+/// \param[in] ns Namespace.
+/// \param[in] id Unique edge id.
+/// \param[in] start Start pose node.
+/// \param[in] end End pose node.
+/// \param[in] rgba Color information.
+/// \param[in] is_opt_edge Boolean of optimized edges.
+void SetEdge(PGOToyExample* toy, visualization_msgs::MarkerArray& edges,
+             std::string ns, int id, int start, int end, Vec4 rgba, bool is_opt_edge)
 {
   visualization_msgs::Marker edge;
   edge.header.frame_id = "world";
@@ -123,7 +144,7 @@ void SetEdges(PGOToyExample* toy, visualization_msgs::MarkerArray& edges,
   edge.ns = ns;
   edge.id = id;
   edge.type = visualization_msgs::Marker::LINE_LIST;
-  edge.color.r = r; edge.color.g = g; edge.color.b = b; edge.color.a = a;
+  edge.color.r = rgba[0]; edge.color.g = rgba[1]; edge.color.b = rgba[2]; edge.color.a = rgba[3];
   edge.pose.orientation.w = 1.0;
   edge.scale.x = 0.01;
 
@@ -150,7 +171,7 @@ void SetEdges(PGOToyExample* toy, visualization_msgs::MarkerArray& edges,
     prev_edge_text.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     prev_edge_text.action = visualization_msgs::Marker::ADD;
     prev_edge_text.scale.z = 0.1;
-    prev_edge_text.color.r = r; prev_edge_text.color.g = g; prev_edge_text.color.b = b; prev_edge_text.color.a = a;
+    prev_edge_text.color.r = rgba[0]; prev_edge_text.color.g = rgba[1]; prev_edge_text.color.b = rgba[2]; prev_edge_text.color.a = rgba[3];
     prev_edge_text.pose.position.x = (p1.x+p2.x)/2.;
     prev_edge_text.pose.position.y = (p1.y+p2.y)/2.;
     prev_edge_text.pose.position.z = (p1.z+p2.z)/2. + 0.1;
@@ -209,7 +230,7 @@ int main(int argc, char **argv) {
   ros::init(argc,argv,"pgo_toy_example");
   ros::NodeHandle nh, priv_nh("~");
 
-  // set publishers.
+  // Set publishers.
   ros::Publisher opt_node_pub = nh.advertise<visualization_msgs::MarkerArray>("opt_nodes",1);
   ros::Publisher opt_edge_pub = nh.advertise<visualization_msgs::MarkerArray>("opt_edges",1);
   ros::Publisher prev_node_pub = nh.advertise<visualization_msgs::MarkerArray>("prev_nodes",1);
@@ -217,46 +238,47 @@ int main(int argc, char **argv) {
   ros::Publisher text_pub = nh.advertise<visualization_msgs::MarkerArray>("texts",1);
 
   int _rate, _iter;
-  priv_nh.param("loop_rate", _rate, 5);
-  priv_nh.param("iteration", _iter, 20);
+  priv_nh.param("loop_rate", _rate, 5);  // loop rate [Hz].
+  priv_nh.param("iteration", _iter, 20); // iteration of optimization.
 
-  // create pgo toy example instance.
+  // Create a PGO toy example instance.
   PGOToyExample* toy = new PGOToyExample(true);
 
   while(ros::ok()) {
     // set loop speed.
     ros::Rate loop_rate(_rate); // [hz]
 
+    // Reset the instance every iteration finished.
     toy->Reset();
     int num_poses = toy->GetOriginalPosesSize();
     int count = 0;
 
-    while(count < _iter) { // [Iteration]
-      // set prev nodes.
+    while(count < _iter) {
+      // Set previous nodes.
       for(int i=0; i<num_poses; i++) {
-        SetNodes(toy, prev_nodes, "prev_nodes", i, 0.0, 0.0, 0.0, 0.25, false);
+        SetNode(toy, prev_nodes, "prev_nodes", i, Vec4(0.0, 0.0, 0.0, 0.25), false);
       }
 
-      // set prev_edges.
+      // Set previous edges.
       for(int i=1; i<num_poses; i++) {
-        SetEdges(toy, prev_edges, "prev_edges", i, i-1, i, 0.0, 0.0, 0.0, 0.25, false);
+        SetEdge(toy, prev_edges, "prev_edges", i, i-1, i, Vec4(0.0, 0.0, 0.0, 0.25), false);
       }
-      SetEdges(toy, opt_edges, "prev_edges", 16, 5, 11, 0.0, 0.0, 0.0, 0.25, false);
-      SetEdges(toy, opt_edges, "prev_edges", 17, 3, 14, 0.0, 0.0, 0.0, 0.25, false);
+      SetEdge(toy, opt_edges, "prev_edges", 16, 5, 11, Vec4(0.0, 0.0, 0.0, 0.25), false);
+      SetEdge(toy, opt_edges, "prev_edges", 17, 3, 14, Vec4(0.0, 0.0, 0.0, 0.25), false);
 
-      // set optimized poses.
+      // Set optimized poses.
       for(int i=0; i<num_poses; i++) {
-        SetNodes(toy, prev_nodes, "opt_nodes", i, 0.0, 0.0, 0.0, 1.0, true);
+        SetNode(toy, prev_nodes, "opt_nodes", i, Vec4(0.0, 0.0, 0.0, 1.0), true);
       }
 
-      // set optimized edges.
+      // Set optimized edges.
       for(int i=1; i<num_poses; i++) {
-        SetEdges(toy, opt_edges, "opt_edges", i, i-1, i, 0.0, 0.0, 0.0, 1, true);
+        SetEdge(toy, opt_edges, "opt_edges", i, i-1, i, Vec4(0.0, 0.0, 0.0, 1), true);
       }
-      SetEdges(toy, opt_edges, "opt_edges", 16, 5, 11, 0.0, 0.0, 0.0, 1, true);
-      SetEdges(toy, opt_edges, "opt_edges", 17, 3, 14, 0.0, 0.0, 0.0, 1, true);
+      SetEdge(toy, opt_edges, "opt_edges", 16, 5, 11, Vec4(0.0, 0.0, 0.0, 1), true);
+      SetEdge(toy, opt_edges, "opt_edges", 17, 3, 14, Vec4(0.0, 0.0, 0.0, 1), true);
 
-
+      // Set the text message marker.
       visualization_msgs::Marker text;
       text.header.frame_id = "world";
       text.header.stamp = ros::Time();
@@ -268,11 +290,11 @@ int main(int argc, char **argv) {
       text.color.r = 0.0; text.color.g = 0.0; text.color.b = 0.0; text.color.a = 1.0;
       text.pose.position.y = 0.5;
       text.pose.position.z = 1.0;
-
       std::string comment = "[PGO toy example using g2o]\n\nPose: SE3Quat\nVertex: VertexSE3Expmap\nEdge: EdgeSE3Expmap\nInformation Matrix: Random\n\nBlack: Current Estimated Poses\nGray: Previous Poses";
       text.text = comment;
       texts.markers.push_back(text);
 
+      // Set the count message marker.
       visualization_msgs::Marker count_text;
       count_text.header.frame_id = "world";
       count_text.header.stamp = ros::Time();
@@ -284,7 +306,6 @@ int main(int argc, char **argv) {
       count_text.color.r = 0.0; count_text.color.g = 0.0; count_text.color.b = 0.0; count_text.color.a = 1.0;
       count_text.pose.position.y = 0.5;
       count_text.pose.position.z = 2.0;
-
       std::string counttxt = "Iteration: " + std::to_string(count);
       count_text.text = counttxt;
       texts.markers.push_back(count_text);
@@ -305,11 +326,15 @@ int main(int argc, char **argv) {
       prev_node_pub.publish(prev_nodes);
 
       loop_rate.sleep();
+
+      // Do pose graph optimization (one time per each loop for visualization).
       toy->GetOptimizer()->optimize(1);
       count += 1;
     }
 
     std::cout << std::endl;
+
+    // Clear pose graph.
     prev_edges.markers.clear();
     opt_nodes.markers.clear();
     prev_nodes.markers.clear();

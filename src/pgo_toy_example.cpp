@@ -13,8 +13,9 @@ double Sampling::Gaussian(double sigma) {
 PGOToyExample::PGOToyExample(bool verbose)
     : vertex_id_(0), verbose_(verbose)
 {
-  num_poses_ = 15;
+  num_poses_ = 15; // Set number of poses.
 
+  // Set g2o solver.
   std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType> linear_solver;
   linear_solver = g2o::make_unique<g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>>();
 
@@ -28,7 +29,7 @@ PGOToyExample::PGOToyExample(bool verbose)
 }
 
 void PGOToyExample::SetOriginalPoses() {
-  // Set original poses.
+  // Set the original poses.
   for(int i=0; i<num_poses_; i++){
     Vec3 trans;
     if(i==0) {
@@ -51,7 +52,7 @@ void PGOToyExample::SetOriginalPoses() {
     }
 
     Quaternion q;
-    q.setIdentity();
+    q.setIdentity(); // Set the initial rotation to identity.
 
     g2o::SE3Quat pose;
     pose.setRotation(q);
@@ -79,8 +80,9 @@ void PGOToyExample::MakeCurrentPoseAndAddVertex() {
 
     g2o::SE3Quat origin = original_poses_.at(i);
     g2o::SE3Quat noise;
-    noise.setTranslation(origin.translation() + trans);
+    noise.setTranslation(origin.translation() + trans); // Add noise to original poses.
 
+    // Add noise pose into the g2o optimizer.
     vtx->setEstimate(noise);
     optimizer_->addVertex(vtx);
     vertex_id_ += 1;
@@ -107,6 +109,8 @@ void PGOToyExample::AddEdge() {
     e->setInformation(information);
     e->vertices()[0] = optimizer_->vertex(i-1);
     e->vertices()[1] = optimizer_->vertex(i);
+
+    // Add the edge into the g2o optimizer.
     optimizer_->addEdge(e);
   }
 
@@ -141,8 +145,10 @@ void PGOToyExample::Reset() {
 
   // set original vertices.
   SetOriginalPoses();
+
   // make current vertices and add vertices to optimizer.
   MakeCurrentPoseAndAddVertex();
+
   // add edges to optimizer.
   AddEdge();
 
