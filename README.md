@@ -14,7 +14,7 @@
 
 # Requirement
 - ROS kinetic (Ubuntu 16.04) or ROS melodic (Ubuntu 18.04) [download](http://wiki.ros.org/ROS/Installation)
-- g2o library (2020.07 commit) [download] (https://github.com/RainerKuemmerle/g2o) 
+- g2o library (2020.07 commit) [download](https://github.com/RainerKuemmerle/g2o) 
 
 # Instruction
 - Clone this repository `git clone https://github.com/edward0im/pgo_toy_example`.
