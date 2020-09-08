@@ -12,3 +12,9 @@
 - Black: Current Estimated Poses
 - Gray: Previous Poses
 
+# Instruction
+- Clone this repository `git clone https://github.com/edward0im/pgo_toy_example`.
+- Put this direcotory into your workspace such as `catkin_ws`.
+- Build the workspace using `catkin_make`.
+- Update ROS packages using `rospack profile`.
+- Run `roslaunch pgo_toy_example pgo_toy_example.launch`.
