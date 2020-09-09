@@ -82,7 +82,6 @@ class PGOToyExample {
  public:
   /// The constructor.
   /// \param[in] verbose Optimization verbose setting.
-  /// \param[in] num_poses Number of pose vertices.
   PGOToyExample(bool verbose=true);
 
   /// \brief Set original pose data.
