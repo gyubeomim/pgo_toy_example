@@ -35,6 +35,7 @@ visualization_msgs::MarkerArray opt_edges;
 // text arrays.
 visualization_msgs::MarkerArray texts;
 
+// Position of the first node.
 double xinit, yinit, zinit;
 
 /// \brief Set the pose graph nodes for ROS visualization.
