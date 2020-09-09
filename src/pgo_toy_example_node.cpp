@@ -37,14 +37,14 @@ visualization_msgs::MarkerArray texts;
 
 double xinit, yinit, zinit;
 
-/// \brief Set the pose graph nodes.
+/// \brief Set the pose graph nodes for ROS visualization.
 /// \param[in] toy Pointer to PGOToyExample instance.
 /// \param[out] nodes Marker array of pose graph nodes.
 /// \param[in] ns Namespace.
 /// \param[in] id Unique node id.
 /// \param[in] rgba Color information.
 /// \param[in] is_opt_node Boolean of optimized nodes.
-void SetNode(PGOToyExample* toy, visualization_msgs::MarkerArray& nodes,
+void SetNodeForROS(PGOToyExample* toy, visualization_msgs::MarkerArray& nodes,
               std::string ns, int id, Vec4 rgba, bool is_opt_node)
 {
   visualization_msgs::Marker node;
@@ -126,7 +126,7 @@ void SetNode(PGOToyExample* toy, visualization_msgs::MarkerArray& nodes,
   }
 }
 
-/// \brief Set the pose graph edge.
+/// \brief Set the pose graph edge for ROS visualization.
 /// \param[in] toy Pointer to PGOToyExample instance.
 /// \param[out] edges Marker array of pose graph edges.
 /// \param[in] ns Namespace.
@@ -135,7 +135,7 @@ void SetNode(PGOToyExample* toy, visualization_msgs::MarkerArray& nodes,
 /// \param[in] end End pose node.
 /// \param[in] rgba Color information.
 /// \param[in] is_opt_edge Boolean of optimized edges.
-void SetEdge(PGOToyExample* toy, visualization_msgs::MarkerArray& edges,
+void SetEdgeForROS(PGOToyExample* toy, visualization_msgs::MarkerArray& edges,
              std::string ns, int id, int start, int end, Vec4 rgba, bool is_opt_edge)
 {
   visualization_msgs::Marker edge;
@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
   ros::init(argc,argv,"pgo_toy_example");
   ros::NodeHandle nh, priv_nh("~");
 
-  // Set publishers.
+  // Set the publishers.
   ros::Publisher opt_node_pub = nh.advertise<visualization_msgs::MarkerArray>("opt_nodes",1);
   ros::Publisher opt_edge_pub = nh.advertise<visualization_msgs::MarkerArray>("opt_edges",1);
   ros::Publisher prev_node_pub = nh.advertise<visualization_msgs::MarkerArray>("prev_nodes",1);
@@ -245,8 +245,8 @@ int main(int argc, char **argv) {
   PGOToyExample* toy = new PGOToyExample(true);
 
   while(ros::ok()) {
-    // set loop speed.
-    ros::Rate loop_rate(_rate); // [hz]
+    // Set the loop speed [hz].
+    ros::Rate loop_rate(_rate);
 
     // Reset the instance every iteration finished.
     toy->Reset();
@@ -254,29 +254,25 @@ int main(int argc, char **argv) {
     int count = 0;
 
     while(count < _iter) {
-      // Set previous nodes.
+      // Set previous nodes and edges.
       for(int i=0; i<num_poses; i++) {
-        SetNode(toy, prev_nodes, "prev_nodes", i, Vec4(0.0, 0.0, 0.0, 0.25), false);
+        SetNodeForROS(toy, prev_nodes, "prev_nodes", i, Vec4(0.0, 0.0, 0.0, 0.25), false);
       }
-
-      // Set previous edges.
       for(int i=1; i<num_poses; i++) {
-        SetEdge(toy, prev_edges, "prev_edges", i, i-1, i, Vec4(0.0, 0.0, 0.0, 0.25), false);
+        SetEdgeForROS(toy, prev_edges, "prev_edges", i, i-1, i, Vec4(0.0, 0.0, 0.0, 0.25), false);
       }
-      SetEdge(toy, opt_edges, "prev_edges", 16, 5, 11, Vec4(0.0, 0.0, 0.0, 0.25), false);
-      SetEdge(toy, opt_edges, "prev_edges", 17, 3, 14, Vec4(0.0, 0.0, 0.0, 0.25), false);
+      SetEdgeForROS(toy, opt_edges, "prev_edges", 16, 5, 11, Vec4(0.0, 0.0, 0.0, 0.25), false);
+      SetEdgeForROS(toy, opt_edges, "prev_edges", 17, 3, 14, Vec4(0.0, 0.0, 0.0, 0.25), false);
 
-      // Set optimized poses.
+      // Set optimized poses and edges.
       for(int i=0; i<num_poses; i++) {
-        SetNode(toy, prev_nodes, "opt_nodes", i, Vec4(0.0, 0.0, 0.0, 1.0), true);
+        SetNodeForROS(toy, prev_nodes, "opt_nodes", i, Vec4(0.0, 0.0, 0.0, 1.0), true);
       }
-
-      // Set optimized edges.
       for(int i=1; i<num_poses; i++) {
-        SetEdge(toy, opt_edges, "opt_edges", i, i-1, i, Vec4(0.0, 0.0, 0.0, 1), true);
+        SetEdgeForROS(toy, opt_edges, "opt_edges", i, i-1, i, Vec4(0.0, 0.0, 0.0, 1), true);
       }
-      SetEdge(toy, opt_edges, "opt_edges", 16, 5, 11, Vec4(0.0, 0.0, 0.0, 1), true);
-      SetEdge(toy, opt_edges, "opt_edges", 17, 3, 14, Vec4(0.0, 0.0, 0.0, 1), true);
+      SetEdgeForROS(toy, opt_edges, "opt_edges", 16, 5, 11, Vec4(0.0, 0.0, 0.0, 1), true);
+      SetEdgeForROS(toy, opt_edges, "opt_edges", 17, 3, 14, Vec4(0.0, 0.0, 0.0, 1), true);
 
       // Set the text message marker.
       visualization_msgs::Marker text;
@@ -310,25 +306,28 @@ int main(int argc, char **argv) {
       count_text.text = counttxt;
       texts.markers.push_back(count_text);
 
-      // publish to /texts
+      // Publish to /texts
       text_pub.publish(texts);
 
-      // publish to /prev_edges
+      // Publish to /prev_edges
       prev_edge_pub.publish(prev_edges);
 
-      // publish to /opt_nodes
+      // Publish to /opt_nodes
       opt_node_pub.publish(opt_nodes);
 
-      // publish to /opt_edges
+      // Publish to /opt_edges
       opt_edge_pub.publish(opt_edges);
 
-      // publish to /prev_nodes
+      // Publish to /prev_nodes
       prev_node_pub.publish(prev_nodes);
 
+      // Control the loop speed.
       loop_rate.sleep();
 
       // Do pose graph optimization (one time per each loop for visualization).
       toy->GetOptimizer()->optimize(1);
+
+      // Add plus one count.
       count += 1;
     }
 
