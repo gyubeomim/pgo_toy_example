@@ -15,7 +15,7 @@
 # Requirement
 - ROS kinetic (Ubuntu 16.04) or ROS melodic (Ubuntu 18.04) [download](http://wiki.ros.org/ROS/Installation)
 - g2o library (2020.07 commit) [download](https://github.com/RainerKuemmerle/g2o) 
-  - If you have a g2o version problem, use `31ea135` commit version.
+  - If you have a g2o version problem while building, try to use `31ea135` commit version.
   - In the g2o directory, type `$ git checkout 31ea135` and build the g2o library.
 
 # Instruction
