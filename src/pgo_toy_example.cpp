@@ -17,11 +17,11 @@ PGOToyExample::PGOToyExample(bool verbose)
 
   // Set g2o solver.
   std::unique_ptr<g2o::BlockSolver_6_3::LinearSolverType> linear_solver;
-  linear_solver = g2o::make_unique<g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>>();
+  linear_solver = std::make_unique<g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>>();
 
   // use LM method to minimize nonlinear least square.
   g2o::OptimizationAlgorithmLevenberg* solver =
-      new g2o::OptimizationAlgorithmLevenberg(g2o::make_unique<g2o::BlockSolver_6_3>(std::move(linear_solver)));
+      new g2o::OptimizationAlgorithmLevenberg(std::make_unique<g2o::BlockSolver_6_3>(std::move(linear_solver)));
   solver->setUserLambdaInit(1);
 
   optimizer_ = new g2o::SparseOptimizer();
