@@ -45,14 +45,16 @@
 /// \brief Get data from the random uniform distribution.
 /// \param[in] lowerBndr Lower bound.
 /// \param[in] lowerBndr Upper bound.
-static double UniformRand(double lowerBndr, double upperBndr){
+static double UniformRand(double lowerBndr, double upperBndr)
+{
   return lowerBndr + ((double) std::rand() / (RAND_MAX + 1.0)) * (upperBndr - lowerBndr);
 }
 
 /// \brief Get data from the random gaussian distribution.
 /// \param[in] mean Mean of gaussian distribution.
 /// \param[in] sigma Sigma of gaussian distribution.
-static double GaussRand(double mean, double sigma){
+static double GaussRand(double mean, double sigma)
+{
   double x, y, r2;
   do {
     x = -1.0 + 2.0 * UniformRand(0.0, 1.0);
@@ -64,7 +66,8 @@ static double GaussRand(double mean, double sigma){
 
 /// \class Sampling
 /// \brief Sample data from the specific distribution. Currently available distrubitions are gaussian and uniform distribution.
-class Sampling {
+class Sampling 
+{
  public:
   /// \brief Sample data from the uniform distribution.
   static int Uniform(int from, int to);
@@ -78,7 +81,8 @@ class Sampling {
 
 /// \class PGOToyExample
 /// \brief toy example of pose graph optimization (PGO) class.
-class PGOToyExample {
+class PGOToyExample 
+{
  public:
   /// The constructor.
   /// \param[in] verbose Optimization verbose setting.

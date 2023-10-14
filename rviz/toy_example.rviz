@@ -60,11 +60,11 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /prev_nodes
-      Name: prev_nodes
+      Marker Topic: /origin_nodes
+      Name: origin_nodes
       Namespaces:
         opt_nodes: true
-        prev_nodes: true
+        origin_nodes: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray

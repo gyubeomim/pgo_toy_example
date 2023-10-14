@@ -20,8 +20,9 @@
 #include <iostream>
 #include <vector>
 
+/* Global Variables */
 // prev poses (gray sphere).
-visualization_msgs::MarkerArray prev_nodes;
+visualization_msgs::MarkerArray origin_nodes;
 
 // prev edges (gray line).
 visualization_msgs::MarkerArray prev_edges;
@@ -32,7 +33,7 @@ visualization_msgs::MarkerArray opt_nodes;
 // optimized edges (black line).
 visualization_msgs::MarkerArray opt_edges;
 
-// text arrays.
+// text arrays. -> 이게 뭐하는거야
 visualization_msgs::MarkerArray texts;
 
 // Position of the first node.
@@ -57,7 +58,9 @@ void SetNodeForROS(PGOToyExample* toy, visualization_msgs::MarkerArray& nodes,
   node.scale.x = node.scale.y = node.scale.z = 0.2;
   node.color.r = rgba[0]; node.color.g = rgba[1]; node.color.b = rgba[2]; node.color.a = rgba[3];
 
-  if(!is_opt_node) {
+  if(!is_opt_node) // false
+  {
+    // 오리지널 위치를 그냥 불러옴
     Quaternion q = (Quaternion)toy->GetOriginalPoses()[id].rotation();
 
     node.pose.position.x = toy->GetOriginalPoses()[id].translation()[0];
@@ -76,13 +79,16 @@ void SetNodeForROS(PGOToyExample* toy, visualization_msgs::MarkerArray& nodes,
     }
     nodes.markers.push_back(node);
   }
-  else {
+  else  // true
+  {
+    // 노이즈가 들어간 놈
     g2o::VertexSE3Expmap* vtx = static_cast<g2o::VertexSE3Expmap*>(toy->GetOptimizer()->vertex(id));
     Isometry opt_poses = vtx->estimate();
     Quaternion q = (Quaternion)opt_poses.rotation();
 
     // First node.
-    if(id==0) {
+    if(id==0) 
+    {
       xinit = opt_poses.translation()[0];
       yinit = opt_poses.translation()[1];
       zinit = opt_poses.translation()[2];
@@ -180,7 +186,8 @@ void SetEdgeForROS(PGOToyExample* toy, visualization_msgs::MarkerArray& edges,
     prev_edge_text.text = txt;
     texts.markers.push_back(prev_edge_text);
   }
-  else {
+  else 
+  {
     g2o::VertexSE3Expmap* prev_vtx = static_cast<g2o::VertexSE3Expmap*>(toy->GetOptimizer()->vertex(start));
     g2o::VertexSE3Expmap* curr_vtx = static_cast<g2o::VertexSE3Expmap*>(toy->GetOptimizer()->vertex(end));
     Isometry prev_opt_poses = prev_vtx->estimate();
@@ -234,7 +241,7 @@ int main(int argc, char **argv) {
   // Set the publishers.
   ros::Publisher opt_node_pub = nh.advertise<visualization_msgs::MarkerArray>("opt_nodes",1);
   ros::Publisher opt_edge_pub = nh.advertise<visualization_msgs::MarkerArray>("opt_edges",1);
-  ros::Publisher prev_node_pub = nh.advertise<visualization_msgs::MarkerArray>("prev_nodes",1);
+  ros::Publisher prev_node_pub = nh.advertise<visualization_msgs::MarkerArray>("origin_nodes",1);
   ros::Publisher prev_edge_pub = nh.advertise<visualization_msgs::MarkerArray>("prev_edges",1);
   ros::Publisher text_pub = nh.advertise<visualization_msgs::MarkerArray>("texts",1);
 
@@ -254,22 +261,29 @@ int main(int argc, char **argv) {
     int num_poses = toy->GetOriginalPosesSize();
     int count = 0;
 
-    while(count < _iter) {
+    while(count < _iter) 
+    {
       // Set previous nodes and edges.
-      for(int i=0; i<num_poses; i++) {
-        SetNodeForROS(toy, prev_nodes, "prev_nodes", i, Vec4(0.0, 0.0, 0.0, 0.25), false);
+      for(int i=0; i<num_poses; i++) 
+      { // 이전 노드 위치 초기화 1~num_poses
+        SetNodeForROS(toy, origin_nodes, "origin_nodes", i, Vec4(0.0, 0.0, 0.0, 0.25), false);
       }
-      for(int i=1; i<num_poses; i++) {
+      for(int i=1; i<num_poses; i++) 
+      { // 엣지 노드 초기화 1~num_poses
         SetEdgeForROS(toy, prev_edges, "prev_edges", i, i-1, i, Vec4(0.0, 0.0, 0.0, 0.25), false);
       }
+      // 루프 클로져처럼 두 노드 사이의 관계 추가로 넣어주는거 같음
       SetEdgeForROS(toy, opt_edges, "prev_edges", 16, 5, 11, Vec4(0.0, 0.0, 0.0, 0.25), false);
       SetEdgeForROS(toy, opt_edges, "prev_edges", 17, 3, 14, Vec4(0.0, 0.0, 0.0, 0.25), false);
 
       // Set optimized poses and edges.
-      for(int i=0; i<num_poses; i++) {
-        SetNodeForROS(toy, prev_nodes, "opt_nodes", i, Vec4(0.0, 0.0, 0.0, 1.0), true);
+      // 위와 마찬가지로 초기화를 하는데, 최적화된 노드와 엣지를 초기화
+      for(int i=0; i<num_poses; i++) 
+      {
+        SetNodeForROS(toy, origin_nodes, "opt_nodes", i, Vec4(0.0, 0.0, 0.0, 1.0), true);
       }
-      for(int i=1; i<num_poses; i++) {
+      for(int i=1; i<num_poses; i++) 
+      {
         SetEdgeForROS(toy, opt_edges, "opt_edges", i, i-1, i, Vec4(0.0, 0.0, 0.0, 1), true);
       }
       SetEdgeForROS(toy, opt_edges, "opt_edges", 16, 5, 11, Vec4(0.0, 0.0, 0.0, 1), true);
@@ -287,7 +301,7 @@ int main(int argc, char **argv) {
       text.color.r = 0.0; text.color.g = 0.0; text.color.b = 0.0; text.color.a = 1.0;
       text.pose.position.y = 0.5;
       text.pose.position.z = 1.0;
-      std::string comment = "[PGO toy example using g2o]\n\nPose: SE3Quat\nVertex: VertexSE3Expmap\nEdge: EdgeSE3Expmap\nInformation Matrix: Random\n\nBlack: Current Estimated Poses\nGray: Previous Poses";
+      std::string comment = "[PGO toy example using g2o]\n\nPose: SE3Quat\nVertex: VertexSE3Expmap\nEdge: EdgeSE3Expmap\nInformation Matrix: Random\n\nBlack: Current Estimated Poses\nGray: Original Poses";
       text.text = comment;
       texts.markers.push_back(text);
 
@@ -319,8 +333,8 @@ int main(int argc, char **argv) {
       // Publish to /opt_edges
       opt_edge_pub.publish(opt_edges);
 
-      // Publish to /prev_nodes
-      prev_node_pub.publish(prev_nodes);
+      // Publish to /origin_nodes
+      prev_node_pub.publish(origin_nodes);
 
       // Control the loop speed.
       loop_rate.sleep();
@@ -337,7 +351,7 @@ int main(int argc, char **argv) {
     // Clear pose graph.
     prev_edges.markers.clear();
     opt_nodes.markers.clear();
-    prev_nodes.markers.clear();
+    origin_nodes.markers.clear();
     texts.markers.clear();
   }
 
